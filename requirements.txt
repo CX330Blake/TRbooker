@@ -1,7 +1,7 @@
 requests
 selenium
-onnxruntime==1.14.0
-ddddocr
+Pillow
+pytesseract
 prettytable
 pyfiglet
 rgbprint
