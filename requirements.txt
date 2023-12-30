@@ -1,5 +1,7 @@
 requests
 selenium
+onnxruntime==1.14.0
 ddddocr
 prettytable
 pyfiglet
+rgbprint

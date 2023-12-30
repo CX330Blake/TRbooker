@@ -9,6 +9,7 @@ required_modules = [
     "prettytable",
     "pyfiglet",
     "rgbprint",
+    "onnxruntime",
 ]
 
 
@@ -17,7 +18,7 @@ def install_requirement():
         subprocess.check_call(
             [sys.executable, "-m", "pip", "install", "-r", "requirements.txt"]
         )
-        rgbprint("\nRequirements are successfully installed!!!\n", color="green")
+        print("\nRequirements are successfully installed!!!\n")
     except subprocess.CalledProcessError:
         print("\nError installing requirements. Please make sure 'pip' is installed.\n")
 
