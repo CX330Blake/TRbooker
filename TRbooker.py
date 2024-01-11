@@ -1,77 +1,45 @@
-# check the modules
-
-import importlib
-import sys
-import subprocess
-
-required_modules = [
-    "requests",
-    "selenium",
-    "Pillow",
-    "prettytable",
-    "pyfiglet",
-    "rgbprint",
-    "pytesseract",
-]
-
-
-def install_requirement():
-    try:
-        subprocess.check_call(
-            [sys.executable, "-m", "pip", "install", "-r", "requirements.txt"]
-        )
-        print("\nRequirements are successfully installed!!!\n")
-    except subprocess.CalledProcessError:
-        print("\nError installing requirements. Please make sure 'pip' is installed.\n")
-
-
-def check_module(module_name):
-    try:
-        importlib.import_module(module_name)
-        return True
-    except ImportError:
-        return False
-
-
-if all(check_module(module) for module in required_modules):
-    print("\nAll modules we need are installed\n")
-else:
-    install_requirement()
-
-#
-
-import json
-import requests
 from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from PIL import Image
-import pytesseract
-import prettytable
-import pyfiglet
-from rgbprint import Color, rgbprint
+from bs4 import BeautifulSoup
+import requests
+import prettytable as pt
+import json
 
+# Search sechedule
+url = "https://tip.railway.gov.tw/tra-tip-web/tip/tip001/tip112/gobytime"
+header = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+}
+# driver_path = "D:/SourceTree/TRbooker/chromedriver.exe"
+departure = input("請輸入出發站: ")
+arrival = input("請輸入抵達站: ")
+date = input("請輸入日期(yyyy/mm/dd): ")
+departure_time = input("24小時制出發時間(hh:mm)(enter跳過): ")
+arrival_time = input("24小時制抵達時間(hh:mm)(enter跳過): ")
 
-def recaptcha():
-    driver = webdriver.Chrome()
-    driver.implicitly_wait(10)
+driver_path = "D:/SourceTree/TRbooker/chromedriver.exe"
+driver = webdriver.Chrome(driver_path)
+driver.get(url)
+start_station_input = driver.find_element("id", "startStation")
+start_station_input.send_keys(departure)  # 替换为实际的出发站名称
 
-    # 定位 reCAPTCHA 元素
-    recaptcha_frame = driver.find_element(
-        By.XPATH, "//iframe[@title='recaptcha challenge']"
-    )
-    driver.switch_to.frame(recaptcha_frame)
+end_station_input = driver.find_element("id", "endStation")
+end_station_input.send_keys(arrival)  # 替换为实际的抵达站名称
 
-    # 定位方形框元素
-    checkbox = driver.find_element(
-        By.XPATH, "//div[@class='recaptcha-checkbox-checkmark']"
-    )
-    checkbox.click()
+date_input = driver.find_element("id", "rideDate")
+date_input.send_keys(date)
+submit_button = driver.find_element("css selector", "input[type='submit']")
+submit_button.click()
+driver.implicitly_wait(10)  # 等待10秒
+response = driver.page_source
+soup = BeautifulSoup(response, "html.parser")
 
-
-with open("Timetable.json", "r", encoding="uft-8") as file:
-    timetable = json.load(file)
-
-def find_station():
-    for station in timetable:
-        if station 
+# data = {
+#     "startStation": departure,  # 替换为实际的出发站
+#     "endStation": arrival,  # 替换为实际的抵达站
+#     "rideDate": date,  # 替换为实际的日期
+#     "startTime": departure_time,  # 替换为实际的出发时间
+#     "endTime": arrival_time,  # 替换为实际的抵达时间
+#     "transfer": "",  # 替换为实际的转乘条件，比如 'NORMAL'
+#     "trainTypeList": "",  # 替换为实际的车种条件，比如 'ALL'
+#     "queryClassification": "",  # 替换为实际的查询方式，比如 'NORMAL'
+# }
