@@ -8,6 +8,7 @@ import requests
 import prettytable as pt
 import json
 import time
+from rgbprint import rgbprint, gradient_print, Color
 
 # Search sechedule
 url = "https://tip.railway.gov.tw/tra-tip-web/tip/tip001/tip112/gobytime"
@@ -15,24 +16,23 @@ header = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
 }
 # 使用者輸入資訊
-departure = input("請輸入出發站: ")
-arrival = input("請輸入抵達站: ")
-date = input("請輸入日期(yyyy/mm/dd): ")
-departure_time = input("24小時制出發時間(hh:mm)(enter跳過): ")
-arrival_time = input("24小時制抵達時間(hh:mm)(enter跳過): ")
+departure = input(f"{Color.orange}請輸入出發站:{Color.orange} ")
+arrival = input(f"{Color.orange}請輸入抵達站:{Color.orange} ")
+date = input(f"{Color.orange}請輸入日期(yyyy/mm/dd):{Color.orange} ")
 
-#設定web driver
+
+# 設定web driver
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument("--log-level=3")
-driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options=)
+driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
 driver.get(url)
 
-#查找元素，並送出request
+# 查找元素，並送出request
 start_station_input = driver.find_element("id", "startStation")
-start_station_input.send_keys(departure)  # 替换为实际的出发站名称
+start_station_input.send_keys(departure)
 
 end_station_input = driver.find_element("id", "endStation")
-end_station_input.send_keys(arrival)  # 替换为实际的抵达站名称
+end_station_input.send_keys(arrival)
 
 date_input = driver.find_element("id", "rideDate")
 date_input.send_keys(date)
@@ -43,8 +43,8 @@ submit_button.click()
 element = WebDriverWait(driver, 10).until(
     EC.presence_of_element_located((By.CLASS_NAME, "itinerary-controls"))
 )
-
 response = driver.page_source
+driver.quit()
 soup = BeautifulSoup(response, "html.parser")
 table = soup.find("table")
 if table:
@@ -71,9 +71,18 @@ if table:
             train_data.append(train[count].text.replace("\n", ""))
             count += 1
         pt_table.add_row(train_data)
-    print(pt_table)
+    for char in "[+] Succesfully found the schedule...":
+        rgbprint(char, color=Color.light_green, end="")
+        time.sleep(0.1)
+    print()
+    gradient_print(
+        str(pt_table), start_color=Color.yellow_green, end_color=Color.blue_violet
+    )
+    print()
+    # print(pt_table)
 else:
     print("未找到")
+
 
 # data = {
 #     "startStation": departure,  # 替换为实际的出发站
