@@ -18,7 +18,7 @@ header = {
 # 使用者輸入資訊
 departure = input(f"{Color.orange}請輸入出發站:{Color.orange} ")
 arrival = input(f"{Color.orange}請輸入抵達站:{Color.orange} ")
-date = input(f"{Color.orange}請輸入日期(yyyy/mm/dd):{Color.orange} ")
+date = input(f"{Color.orange}請輸入日期(yyyy/mm/dd):{Color.orange} ").replace("/", "")
 
 
 # 設定web driver
@@ -35,6 +35,8 @@ end_station_input = driver.find_element("id", "endStation")
 end_station_input.send_keys(arrival)
 
 date_input = driver.find_element("id", "rideDate")
+date_input.clear()
+date_input.clear()
 date_input.send_keys(date)
 
 submit_button = driver.find_element("css selector", "input[type='submit']")
@@ -50,6 +52,7 @@ table = soup.find("table")
 if table:
     pt_table = pt.PrettyTable()
     pt_table.field_names = [
+        "編號",
         "車種車次",
         "出發時間",
         "抵達時間",
@@ -61,7 +64,7 @@ if table:
 
     trains = table.find_all("tr", class_="trip-column")
     for train in trains[1:]:
-        train_data = []
+        train_data = [trains.index(train)]
         train = train.find_all("td")
         train.pop(9)
         train.pop(8)
