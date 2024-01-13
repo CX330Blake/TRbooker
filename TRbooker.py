@@ -9,21 +9,26 @@ import prettytable as pt
 import json
 import time
 from rgbprint import rgbprint, gradient_print, Color
+import re
+from selenium_recaptcha_solver import RecaptchaSolver
+
 
 # Search sechedule
 url = "https://tip.railway.gov.tw/tra-tip-web/tip/tip001/tip112/gobytime"
-header = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-}
+my_user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+
+
 # 使用者輸入資訊
 departure = input(f"{Color.orange}請輸入出發站:{Color.orange} ")
 arrival = input(f"{Color.orange}請輸入抵達站:{Color.orange} ")
 date = input(f"{Color.orange}請輸入日期(yyyy/mm/dd):{Color.orange} ").replace("/", "")
 
-
 # 設定web driver
 chrome_options = webdriver.ChromeOptions()
+chrome_options.add_argument("--headless")
 chrome_options.add_argument("--log-level=3")
+chrome_options.add_argument(f"--user-agent={my_user_agent}")
+
 driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
 driver.get(url)
 
@@ -34,15 +39,16 @@ start_station_input.send_keys(departure)
 end_station_input = driver.find_element("id", "endStation")
 end_station_input.send_keys(arrival)
 
+# 如果輸入為空，則為當日，反之則為輸入日期
 date_input = driver.find_element("id", "rideDate")
-date_input.clear()
-date_input.clear()
-date_input.send_keys(date)
+if date != "":
+    date_input.clear()
+    date_input.send_keys(date)
 
 submit_button = driver.find_element("css selector", "input[type='submit']")
 submit_button.click()
 
-element = WebDriverWait(driver, 10).until(
+WebDriverWait(driver, 10).until(
     EC.presence_of_element_located((By.CLASS_NAME, "itinerary-controls"))
 )
 response = driver.page_source
@@ -85,6 +91,43 @@ if table:
     # print(pt_table)
 else:
     print("未找到")
+
+
+# Buy
+choice = int(input(f"{Color.orange}請輸入欲購買的列車編號(表格第一行)(輸入99退出不購買): {Color.orange}"))
+if choice == 99:
+    exit(0)
+
+buy_url = "https://tip.railway.gov.tw/tra-tip-web/tip/tip001/tip121/query"
+PID = input(f"{Color.orange}請輸入身分證字號:{Color.orange} ")
+train_num = int(trains[choice].find_all("td")[0].find("a").text.split(" ")[-1])
+driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
+driver.get(buy_url)
+driver.maximize_window()
+WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "iframe")))
+pid_input = driver.find_element("id", "pid")
+pid_input.send_keys(PID)
+
+start_station_input = driver.find_element("id", "startStation")
+start_station_input.send_keys(departure)
+
+end_station_input = driver.find_element("id", "endStation")
+end_station_input.send_keys(arrival)
+
+date_input = driver.find_element("id", "rideDate1")
+if date != "":
+    date_input.clear()
+    date_input.send_keys(date)
+
+train_num_input = driver.find_element("id", "trainNoList1")
+train_num_input.send_keys(train_num)
+
+solver = RecaptchaSolver(driver=driver)
+recaptcha_iframe = driver.find_element(By.XPATH, '//iframe[@title="google recaptcha"]')
+solver.click_recaptcha_v2(iframe=recaptcha_iframe)
+
+time.sleep(30)
+submit_button.click()
 
 
 # data = {
