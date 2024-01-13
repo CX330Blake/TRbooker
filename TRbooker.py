@@ -11,11 +11,11 @@ import time
 from rgbprint import rgbprint, gradient_print, Color
 import re
 from selenium_recaptcha_solver import RecaptchaSolver
+from twocaptcha import TwoCaptcha
 
 
 # Search sechedule
 url = "https://tip.railway.gov.tw/tra-tip-web/tip/tip001/tip112/gobytime"
-my_user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
 
 # 使用者輸入資訊
@@ -24,6 +24,7 @@ arrival = input(f"{Color.orange}請輸入抵達站:{Color.orange} ")
 date = input(f"{Color.orange}請輸入日期(yyyy/mm/dd):{Color.orange} ").replace("/", "")
 
 # 設定web driver
+my_user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument("--headless")
 chrome_options.add_argument("--log-level=3")
@@ -80,7 +81,7 @@ if table:
             train_data.append(train[count].text.replace("\n", ""))
             count += 1
         pt_table.add_row(train_data)
-    for char in "[+] Succesfully found the schedule...":
+    for char in "[+] Successfully found the schedule...":
         rgbprint(char, color=Color.light_green, end="")
         time.sleep(0.1)
     print()
@@ -101,9 +102,19 @@ if choice == 99:
 buy_url = "https://tip.railway.gov.tw/tra-tip-web/tip/tip001/tip121/query"
 PID = input(f"{Color.orange}請輸入身分證字號:{Color.orange} ")
 train_num = int(trains[choice].find_all("td")[0].find("a").text.split(" ")[-1])
+
+# 設定web driver
+my_user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+chrome_options = webdriver.ChromeOptions()
+# chrome_options.add_argument("--headless")
+chrome_options.add_argument("--log-level=3")
+chrome_options.add_argument(f"--user-agent={my_user_agent}")
+chrome_options.add_argument("--no-sandbox")
+chrome_options.add_argument("--disable-extensions")
+chrome_options.add_argument("--window-size=1920,1080")
+
 driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
 driver.get(buy_url)
-driver.maximize_window()
 WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "iframe")))
 pid_input = driver.find_element("id", "pid")
 pid_input.send_keys(PID)
@@ -122,21 +133,35 @@ if date != "":
 train_num_input = driver.find_element("id", "trainNoList1")
 train_num_input.send_keys(train_num)
 
-solver = RecaptchaSolver(driver=driver)
-recaptcha_iframe = driver.find_element(By.XPATH, '//iframe[@title="google recaptcha"]')
-solver.click_recaptcha_v2(iframe=recaptcha_iframe)
-
-time.sleep(30)
+div_container = driver.find_element(By.CSS_SELECTOR, "div.g-recaptcha")
+site_key = div_container.get_attribute("data-sitekey")
+recaptcha_iframe = driver.find_element(By.TAG_NAME, "iframe")
+recaptcha_url = recaptcha_iframe.get_attribute("src")
+api_key = "021a2491a1f46203ad05e326c17ce477"
+solver = TwoCaptcha(api_key)
+try:
+    result = solver.recaptcha(sitekey=site_key, url=recaptcha_url)
+except Exception as e:
+    exit(e)
+print(result)
+driver.execute_script(
+    f'document.getElementById("g-recaptcha-response").innerHTML="{result["code"]}";'
+)
+# request_result = response.json()
+# captcha_id = request_result["request"]
+# time.sleep(5)
+# while True:
+#     response = requests.get(
+#         f"http://2captcha.com/res.php?key={api_key}&action=get&id={captcha_id}&json=1"
+#     )
+#     result = response.json()
+#     print(result)
+#     if result["status"] == 1:
+#         break
+#     time.sleep(5)
+# driver.execute_script(
+#     f'document.getElementById("g-recaptcha-response").innerHTML="{result["request"]}";'
+# )
+submit_button = driver.find_element("css selector", "input[type='submit']")
 submit_button.click()
-
-
-# data = {
-#     "startStation": departure,  # 替换为实际的出发站
-#     "endStation": arrival,  # 替换为实际的抵达站
-#     "rideDate": date,  # 替换为实际的日期
-#     "startTime": departure_time,  # 替换为实际的出发时间
-#     "endTime": arrival_time,  # 替换为实际的抵达时间
-#     "transfer": "",  # 替换为实际的转乘条件，比如 'NORMAL'
-#     "trainTypeList": "",  # 替换为实际的车种条件，比如 'ALL'
-#     "queryClassification": "",  # 替换为实际的查询方式，比如 'NORMAL'
-# }
+time.sleep(30)
