@@ -141,15 +141,13 @@ api_key = "021a2491a1f46203ad05e326c17ce477"
 solver = TwoCaptcha(api_key)
 
 while True:
+    print("Solving reCAPTCHA")
     result = solver.recaptcha(sitekey=site_key, url=recaptcha_url, version="v2")
-    # driver.execute_script(
-    #     f'document.getElementById("g-recaptcha-response").innerHTML="{result["code"]}";'
-    # )
-    textarea = driver.find_element(By.ID, "g-recaptcha-response")
-    textarea.send_keys(result["code"])
-    time.sleep(4)
-    submit_button = driver.find_element("css selector", "input[type='submit']")
-    submit_button.click()
+    code = result["code"]
+    recaptcha_response_element = driver.find_element(By.ID, "g-recaptcha-response")
+    driver.execute_script(f'arguments[0].value = "{code}";', recaptcha_response_element)
+    submit_btn = driver.find_element("css selector", "input[type='submit']")
+    submit_btn.click()
     time.sleep(3)
     if driver.find_element(By.TAG_NAME, "strong").text == "訂票成功！":
         solver.report(result["captchaId"], True)
