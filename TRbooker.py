@@ -142,7 +142,7 @@ solver = TwoCaptcha(api_key)
 
 while True:
     print("Solving reCAPTCHA")
-    result = solver.recaptcha(sitekey=site_key, url=recaptcha_url, version="v2")
+    result = solver.recaptcha(sitekey=site_key, url=buy_url, version="v2")
     code = result["code"]
     recaptcha_response_element = driver.find_element(By.ID, "g-recaptcha-response")
     driver.execute_script(f'arguments[0].value = "{code}";', recaptcha_response_element)
