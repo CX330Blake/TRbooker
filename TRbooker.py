@@ -12,7 +12,7 @@ from rgbprint import rgbprint, gradient_print, Color
 import re
 from selenium_recaptcha_solver import RecaptchaSolver
 from twocaptcha import TwoCaptcha
-
+import sys
 
 # Search sechedule
 url = "https://tip.railway.gov.tw/tra-tip-web/tip/tip001/tip112/gobytime"
@@ -139,29 +139,31 @@ recaptcha_iframe = driver.find_element(By.TAG_NAME, "iframe")
 recaptcha_url = recaptcha_iframe.get_attribute("src")
 api_key = "021a2491a1f46203ad05e326c17ce477"
 solver = TwoCaptcha(api_key)
-try:
-    result = solver.recaptcha(sitekey=site_key, url=recaptcha_url)
-except Exception as e:
-    exit(e)
-print(result)
-driver.execute_script(
-    f'document.getElementById("g-recaptcha-response").innerHTML="{result["code"]}";'
-)
-# request_result = response.json()
-# captcha_id = request_result["request"]
-# time.sleep(5)
-# while True:
-#     response = requests.get(
-#         f"http://2captcha.com/res.php?key={api_key}&action=get&id={captcha_id}&json=1"
-#     )
-#     result = response.json()
-#     print(result)
-#     if result["status"] == 1:
-#         break
-#     time.sleep(5)
+
+while True:
+    result = solver.recaptcha(sitekey=site_key, url=recaptcha_url, version="v2")
+    # driver.execute_script(
+    #     f'document.getElementById("g-recaptcha-response").innerHTML="{result["code"]}";'
+    # )
+    textarea = driver.find_element(By.ID, "g-recaptcha-response")
+    textarea.send_keys(result["code"])
+    time.sleep(4)
+    submit_button = driver.find_element("css selector", "input[type='submit']")
+    submit_button.click()
+    time.sleep(3)
+    if driver.find_element(By.TAG_NAME, "strong").text == "訂票成功！":
+        solver.report(result["captchaId"], True)
+        break
+    else:
+        solver.report(result["captchaId"], False)
+        print("失敗，再試一次")
+        continue
+
+# print(result)
 # driver.execute_script(
-#     f'document.getElementById("g-recaptcha-response").innerHTML="{result["request"]}";'
+#     f'document.getElementById("g-recaptcha-response").innerHTML="{result["code"]}";'
 # )
-submit_button = driver.find_element("css selector", "input[type='submit']")
-submit_button.click()
-time.sleep(30)
+# time.sleep(4)
+# submit_button = driver.find_element("css selector", "input[type='submit']")
+# submit_button.click()
+# time.sleep(30)
