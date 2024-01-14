@@ -13,15 +13,29 @@ import re
 from selenium_recaptcha_solver import RecaptchaSolver
 from twocaptcha import TwoCaptcha
 import sys
+import art
 
 # Search sechedule
+
+title = r"""
+########  #######  #######  #######  #######  ##   ##  #######  ####### 
+   ##          ##       ##       ##       ##  ##  ##                 ##         
+   ##     #######  ######   ##   ##  ##   ##  #####    ####     ####### 
+   ##     ##  ##   ##   ##  ##   ##  ##   ##  ##  ##   ##       ##  ##      </> Create by CX330Blake  
+   ##     ##   ##  #######  #######  #######  ##   ##  #######  ##   ##     </> Version 1.1   
+"""
+
+gradient_print(title, start_color=Color.blue, end_color=Color.orange_red, end="")
+print()
+
 url = "https://tip.railway.gov.tw/tra-tip-web/tip/tip001/tip112/gobytime"
 
-
 # 使用者輸入資訊
-departure = input(f"{Color.orange}請輸入出發站:{Color.orange} ")
-arrival = input(f"{Color.orange}請輸入抵達站:{Color.orange} ")
-date = input(f"{Color.orange}請輸入日期(yyyy/mm/dd):{Color.orange} ").replace("/", "")
+departure = input(f"{Color.sky_blue}[>] 請輸入出發站:{Color.sky_blue} ").replace("台", "臺")
+arrival = input(f"{Color.sky_blue}[>] 請輸入抵達站:{Color.sky_blue} ").replace("台", "臺")
+date = input(f"{Color.sky_blue}[>] 請輸入日期(yyyy/mm/dd):{Color.sky_blue} ").replace(
+    "/", ""
+)
 
 # 設定web driver
 my_user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -29,6 +43,7 @@ chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument("--headless")
 chrome_options.add_argument("--log-level=3")
 chrome_options.add_argument(f"--user-agent={my_user_agent}")
+chrome_options.add_argument("--disable-dev-shm-usage")
 
 driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
 driver.get(url)
@@ -95,23 +110,44 @@ else:
 
 
 # Buy
-choice = int(input(f"{Color.orange}請輸入欲購買的列車編號(表格第一行)(輸入99退出不購買): {Color.orange}"))
+choice = int(
+    input(f"{Color.sky_blue}[>] 請輸入欲購買的列車編號(表格第一行)(輸入99退出不購買): {Color.sky_blue}")
+)
 if choice == 99:
     exit(0)
 
+
+def pid_is_valid(input_str):
+    pattern = re.compile(r"^[a-zA-Z]\d{9}$")
+    match = pattern.match(input_str)
+    return bool(match)
+
+
 buy_url = "https://tip.railway.gov.tw/tra-tip-web/tip/tip001/tip121/query"
-PID = input(f"{Color.orange}請輸入身分證字號:{Color.orange} ")
+while True:
+    PID = input(f"{Color.sky_blue}[>] 請輸入身分證字號:{Color.sky_blue} ")
+    if pid_is_valid(PID):
+        break
+    else:
+        rgbprint("身分證輸入格式錯誤！", color=Color.red)
+        continue
+quantity = input(f"{Color.sky_blue}[>] 請輸入購買數量:{Color.sky_blue} ")
 train_num = int(trains[choice].find_all("td")[0].find("a").text.split(" ")[-1])
+rgbprint("Ordering ticket ~", color=Color.light_green)
+"""
+TO DO >>
+check_table = pt.PrettyTable.field_names["身分證字號", "車號", "出發時間", "抵達時間", "購買數量"]
+"""
 
 # 設定web driver
 my_user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 chrome_options = webdriver.ChromeOptions()
-# chrome_options.add_argument("--headless")
+chrome_options.add_argument("--headless")
 chrome_options.add_argument("--log-level=3")
 chrome_options.add_argument(f"--user-agent={my_user_agent}")
 chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disable-extensions")
-chrome_options.add_argument("--window-size=1920,1080")
+chrome_options.add_argument("--disable-dev-shm-usage")
 
 driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
 driver.get(buy_url)
@@ -133,28 +169,42 @@ if date != "":
 train_num_input = driver.find_element("id", "trainNoList1")
 train_num_input.send_keys(train_num)
 
-div_container = driver.find_element(By.CSS_SELECTOR, "div.g-recaptcha")
-site_key = div_container.get_attribute("data-sitekey")
-recaptcha_iframe = driver.find_element(By.TAG_NAME, "iframe")
-recaptcha_url = recaptcha_iframe.get_attribute("src")
-api_key = "021a2491a1f46203ad05e326c17ce477"
-solver = TwoCaptcha(api_key)
+quantity_input = driver.find_element("id", "normalQty")
+if quantity != "1":
+    quantity_input.clear()
+    quantity_input.send_keys(quantity)
 
 while True:
-    print("Solving reCAPTCHA")
+    rgbprint("Solving reCAPTCHA...", color=Color.light_green)
+    div_container = driver.find_element(By.CSS_SELECTOR, "div.g-recaptcha")
+    site_key = div_container.get_attribute("data-sitekey")
+    api_key = "021a2491a1f46203ad05e326c17ce477"
+    solver = TwoCaptcha(api_key)
     result = solver.recaptcha(sitekey=site_key, url=buy_url, version="v2")
     code = result["code"]
-    recaptcha_response_element = driver.find_element(By.ID, "g-recaptcha-response")
+    recaptcha_response_element = driver.find_element("id", "g-recaptcha-response")
     driver.execute_script(f'arguments[0].value = "{code}";', recaptcha_response_element)
     submit_btn = driver.find_element("css selector", "input[type='submit']")
     submit_btn.click()
-    time.sleep(3)
+    time.sleep(1)
     if driver.find_element(By.TAG_NAME, "strong").text == "訂票成功！":
         solver.report(result["captchaId"], True)
+        msg = "[~] 訂票成功！"
+        for char in msg:
+            rgbprint(char, color=Color.light_green, end="")
+            time.sleep(0.1)
+        break
+
+    Error = driver.find_element(By.ID, "errorDiv")
+    if "display: none;" not in Error.get_attribute("style"):
+        msg = "[!] " + Error.find_elements(By.TAG_NAME, "p")[-1].text
+        for char in msg:
+            rgbprint(char, color=Color.red, end="")
+            time.sleep(0.1)
         break
     else:
         solver.report(result["captchaId"], False)
-        print("失敗，再試一次")
+        rgbprint("失敗，再試一次", color=Color.red)
         continue
 
 # print(result)
