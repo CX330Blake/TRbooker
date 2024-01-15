@@ -1,5 +1,6 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
@@ -48,12 +49,21 @@ chrome_options.add_argument("--disable-dev-shm-usage")
 driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
 driver.get(url)
 
+
+def check_autocomplete(station):
+    if station == "臺中":
+        station = "3300"
+    elif station == "新竹":
+        station = "1210"
+    return station
+
+
 # 查找元素，並送出request
 start_station_input = driver.find_element("id", "startStation")
-start_station_input.send_keys(departure)
+start_station_input.send_keys(check_autocomplete(departure))
 
 end_station_input = driver.find_element("id", "endStation")
-end_station_input.send_keys(arrival)
+end_station_input.send_keys(check_autocomplete(arrival))
 
 # 如果輸入為空，則為當日，反之則為輸入日期
 date_input = driver.find_element("id", "rideDate")
@@ -134,6 +144,7 @@ while True:
 quantity = input(f"{Color.sky_blue}[>] 請輸入購買數量:{Color.sky_blue} ")
 train_num = int(trains[choice].find_all("td")[0].find("a").text.split(" ")[-1])
 rgbprint("Ordering ticket ~", color=Color.light_green)
+
 """
 TO DO >>
 check_table = pt.PrettyTable.field_names["身分證字號", "車號", "出發時間", "抵達時間", "購買數量"]
@@ -156,10 +167,10 @@ pid_input = driver.find_element("id", "pid")
 pid_input.send_keys(PID)
 
 start_station_input = driver.find_element("id", "startStation")
-start_station_input.send_keys(departure)
+start_station_input.send_keys(check_autocomplete(departure))
 
 end_station_input = driver.find_element("id", "endStation")
-end_station_input.send_keys(arrival)
+end_station_input.send_keys(check_autocomplete(arrival))
 
 date_input = driver.find_element("id", "rideDate1")
 if date != "":
