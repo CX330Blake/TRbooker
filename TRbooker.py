@@ -217,12 +217,3 @@ while True:
         solver.report(result["captchaId"], False)
         rgbprint("失敗，再試一次", color=Color.red)
         continue
-
-# print(result)
-# driver.execute_script(
-#     f'document.getElementById("g-recaptcha-response").innerHTML="{result["code"]}";'
-# )
-# time.sleep(4)
-# submit_button = driver.find_element("css selector", "input[type='submit']")
-# submit_button.click()
-# time.sleep(30)
